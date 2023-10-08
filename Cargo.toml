@@ -1,0 +1,6 @@
+[package]
+name = "push_swap-lcs-rs"
+publish = false
+version = "0.1.0"
+
+[dependencies]
