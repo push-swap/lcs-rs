@@ -98,6 +98,34 @@ impl StreamNode {
                 Ok(())
             }
             StreamNode::Parallel(a, b) => {
+                if a.op.len() == 0 {
+                    for op in &b.op {
+                        writeln!(
+                            stdout,
+                            "{}",
+                            match op {
+                                ParallelOperation::S => "sb",
+                                ParallelOperation::R => "rb",
+                                ParallelOperation::RR => "rrb",
+                            }
+                        )?;
+                    }
+                    return Ok(());
+                }
+                if b.op.len() == 0 {
+                    for op in &a.op {
+                        writeln!(
+                            stdout,
+                            "{}",
+                            match op {
+                                ParallelOperation::S => "sa",
+                                ParallelOperation::R => "ra",
+                                ParallelOperation::RR => "rra",
+                            }
+                        )?;
+                    }
+                    return Ok(());
+                }
                 let mut matrix = vec![vec![0; a.op.len() + 1]; b.op.len() + 1];
                 for i in 1..=b.op.len() {
                     for j in 1..=a.op.len() {
@@ -117,10 +145,10 @@ impl StreamNode {
                         i -= 1;
                         j -= 1;
                     } else if matrix[i - 1][j] > matrix[i][j - 1] {
-                        lcs.push((b.op[i - 1], true, false));
+                        lcs.push((b.op[i - 1], false, true));
                         i -= 1;
                     } else {
-                        lcs.push((a.op[j - 1], false, true));
+                        lcs.push((a.op[j - 1], true, false));
                         j -= 1;
                     }
                 }
@@ -234,14 +262,13 @@ impl Stream {
                 }
                 OperationMetadata::Parallel(op, for_a, for_b) => {
                     if let StreamNode::Parallel(a, b) = last_node {
-                        let mut remove = false;
                         if *for_a {
-                            remove &= a.add(*op);
+                            a.add(*op);
                         }
                         if *for_b {
-                            remove &= b.add(*op);
+                            b.add(*op);
                         }
-                        if remove {
+                        if a.op.len() == 0 && b.op.len() == 0 {
                             self.nodes.pop();
                         }
                     } else {
